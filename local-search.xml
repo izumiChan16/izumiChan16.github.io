@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="/2021/06/20/hello-world/"/>
+    <url>/2021/06/20/hello-world/</url>
+    
+    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo new <span class="hljs-string">&quot;My New Post&quot;</span><br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo server<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo generate<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo deploy<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>DAY#6 为Arch设置交换分区和休眠</title>
+    <link href="/2021/06/08/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY6archswapon/"/>
+    <url>/2021/06/08/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY6archswapon/</url>
+    
+    <content type="html"><![CDATA[<h3 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h3><p>因为想切换到Windows系统备份微信聊天记录，但是Arch关机总是很慢， 所以想去查查怎么关闭启动项里的<code>quiet</code>，以便显示关机时的详细工作。  </p><span id="more"></span><p>然后，就在CSDN上看到一篇，为Arch开启休眠模式的文章。  </p><p>这里有一个知识点：  </p><ul><li>suspend 挂起,待机,暂停 (str: suspend to RAM)保存到内存 通电 低功耗</li><li>hibernate 休眠,冬眠 (std: suspend to disk)保存至硬盘swap 断电 关机</li><li>HybridSleep 混合睡眠 (strd:suspend to both)保存到内存和硬盘 通电 低功耗</li></ul><p>但是使用 <code>sudo blkid</code>命令可以发现我的Arch压根没有设置交换分区（尽管我依稀记得我装机的时候是设置了的）<br><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/blkid.png" alt="blkid"></p><h3 id="开始设置"><a href="#开始设置" class="headerlink" title="开始设置"></a>开始设置</h3><p>根据<code>Red Hat Enterprise Linux</code>的说法确定SWAP分区的大小   </p><div class="table-container"><table><thead><tr><th>物理内存</th><th>SWAP</th></tr></thead><tbody><tr><td>&lt;= 4G</td><td>至少4G</td></tr><tr><td>4~16G</td><td>至少8G</td></tr><tr><td>16~64G</td><td>至少16G</td></tr><tr><td>64~256G</td><td>至少32G</td></tr></tbody></table></div><p>这里参考<a href="https://wiki.archlinux.org/title/Swap_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87"> ArchLinux wiki</a>  </p><p>使用 dd 去创建一个由你自己指定大小的交换文件。例如，创建一个 512 MiB 的交换文件:<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">dd if=/dev/zero of=/swapfile bs=1M count=512 status=progress<br></code></pre></td></tr></table></figure><br>注意： 使用 dd to allocate a swap file is the most portable solution，有关更多信息，请参见 swapon(8) § Files with holes<br>为交换文件设置权限（交换文件全局可读是一个巨大的本地漏洞）：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">chmod 600 /swapfile<br></code></pre></td></tr></table></figure><p>创建正确大小的文件后，将其格式化用来作为交换文件：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">mkswap /swapfile<br></code></pre></td></tr></table></figure><p>启用交换文件：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">swapon /swapfile<br></code></pre></td></tr></table></figure><p>最后，编辑 /etc/fstab，在为交换文件添加一个条目：<br><figure class="highlight avrasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs avrasm">/swapfile none <span class="hljs-keyword">swap</span> defaults <span class="hljs-number">0</span> <span class="hljs-number">0</span><br></code></pre></td></tr></table></figure></p><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/swapfile.png" alt="设置swapfile"></p><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/fstab.png" alt="修改/etc/fastab"></p><hr><p>参考视频  </p><iframe src="https://player.bilibili.com/player.html?aid=26077192&bvid=BV1Qs411G7Yy&cid=44712453&page=1&as_wide=1&high_quality=1&danmaku=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="width: 100%; height: 500px; max-width: 100%；align:center; padding:20px 0;"> </iframe><h4 id="Why-SWAP-File？"><a href="#Why-SWAP-File？" class="headerlink" title="Why SWAP File？"></a>Why SWAP File？</h4><p class="note note-primary">相比于使用一个磁盘分区作为交换空间，使用交换文件可以更方便地随时调整大小或者移除。当磁盘空间有限（例如常规大小的SSD）时，使用交换文件更加理想。</p><h3 id="休眠到交换文件"><a href="#休眠到交换文件" class="headerlink" title="休眠到交换文件"></a>休眠到交换文件</h3><p>设置grub  </p><p>添加 <code>resume</code>和<code>resume_offset</code></p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">lsblk -no UUID /dev/nvme0n1p5 #获取resume=UUID<br></code></pre></td></tr></table></figure><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo filefrag -v /swapfile #获取resume_offset<br></code></pre></td></tr></table></figure><h3 id="重新生成grub-cfg"><a href="#重新生成grub-cfg" class="headerlink" title="重新生成grub.cfg"></a>重新生成grub.cfg</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">grub-mkconfig -o /boot/grub/grub.cfg<br></code></pre></td></tr></table></figure><h3 id="设置-Kernel-Module"><a href="#设置-Kernel-Module" class="headerlink" title="设置 Kernel Module"></a>设置 Kernel Module</h3><p>编辑 mkinitcpio.conf 的 HOOKS 项  </p><p>添加 <code>resume</code> 钩子  </p><p>修改<code>/etc/mkinitcpio.conf</code><br><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">HOOKS</span>=(base udev autodetect modconf block resume filesystems keyboard fsck)<br></code></pre></td></tr></table></figure></p><p class="note note-warning">这里需要让`resume`在`udev`之前。</p><h3 id="重新编译镜像"><a href="#重新编译镜像" class="headerlink" title="重新编译镜像"></a>重新编译镜像</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo mkinitcpio -p 内核名称 #不知道就直接使用tab补全<br></code></pre></td></tr></table></figure><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/setgrub.png" alt=""></p><h3 id="重启试试"><a href="#重启试试" class="headerlink" title="重启试试"></a>重启试试</h3><p>成功的话，在电源选项菜单里应该已经出现了休眠选项~~~</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>swaplife</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>DAY#5 Arch清理缓存</title>
+    <link href="/2021/06/07/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY5archcleancache/"/>
+    <url>/2021/06/07/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY5archcleancache/</url>
+    
+    <content type="html"><![CDATA[<p>今天在安装 <code>electron-wechat</code> 的时候遇到了麻烦，下载包的时候一点速度都没有。所以想要更换一个aur包下载。那么之前安装的无用包，就需要得到清理了。</p><span id="more"></span><hr><h3 id="清理安装包缓存"><a href="#清理安装包缓存" class="headerlink" title="清理安装包缓存"></a>清理安装包缓存</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo pacman -Scc<br></code></pre></td></tr></table></figure><p class="note note-info">不仅会删除未安装或旧版本的包文件缓存，也会将安装着的包的包文件缓存也一并删除。</p><h3 id="清理孤立软件包"><a href="#清理孤立软件包" class="headerlink" title="清理孤立软件包"></a>清理孤立软件包</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo pacman -Rns $(pacman -Qtdq)<br></code></pre></td></tr></table></figure><p class="note note-info">就可以删除孤立的软件包。什么是孤立的软件包呢？比如我想要吃西餐，我需要买刀叉。刀叉即西餐的一个依赖，西餐依赖于刀叉。如果我再也不想要吃西餐了，那么已经买来的刀叉也没用了。这个刀叉即孤立的软件包。</p><h3 id="清理日志"><a href="#清理日志" class="headerlink" title="清理日志"></a>清理日志</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">journalctl --vacuum-size=50M<br></code></pre></td></tr></table></figure><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><section class="footnotes"><div class="footnote-list"><ol><li><span id="fn:1" class="footnote-text"><span><a href="https://qsctech-sange.github.io/arch-linux-clean.html">三个技术小站</a><a href="#fnref:1" rev="footnote" class="footnote-backref"> ↩</a></span></span></li></ol></div></section>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>Linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>6月4日</title>
+    <link href="/2021/06/04/Dairy/6-4/"/>
+    <url>/2021/06/04/Dairy/6-4/</url>
+    
+    <content type="html"><![CDATA[<h1 id="风吕敷的旅行"><a href="#风吕敷的旅行" class="headerlink" title="风吕敷的旅行"></a>风吕敷的旅行</h1><p>开心<br><span id="more"></span></p><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/cloud.jpg" alt="云朵真美"></p><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/gaigai.jpg" alt="花儿真香"></p><h2 id="友情链接"><a href="#友情链接" class="headerlink" title="友情链接"></a>友情链接</h2><section class="footnotes"><div class="footnote-list"><ol><li><span id="fn:1" class="footnote-text"><span><a href="http://www.coolapk.com/u/1299154">@老菊菊菊菊菊菊</a><a href="#fnref:1" rev="footnote" class="footnote-backref"> ↩</a></span></span></li></ol></div></section>]]></content>
+    
+    
+    <categories>
+      
+      <category>日记</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>今天我的域名备案了</title>
+    <link href="/2021/06/03/BLOG/myhexosetting/"/>
+    <url>/2021/06/03/BLOG/myhexosetting/</url>
+    
+    <content type="html"><![CDATA[<h2 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h2><p>按理说，我的网站是不需要进行备案的。因为是纯个人性质，并且不知道什么时候就不玩了。不过我还是决定为域名进行备案，刚好我手上有个闲置的腾讯云服务器。  </p><p>而原因也很简单，因为博客并不是架设在国内服务器上的，所以访问缓慢。不过最主要的原因，还是大部分国内网，似乎不能加载出Github图床上的图片，然后就会挂掉。。。  </p><p>所以，我开始了漫长的等待<br><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/beian.png" alt="等待审查"></p><h2 id="部署CDN"><a href="#部署CDN" class="headerlink" title="部署CDN"></a>部署CDN</h2><p>今天在又拍云上翻车了，一顿操作连网页都上不去了。直接弃了，转投免费的腾讯云服务，每个月送20G流量确实很香。  </p><p>这一步参考了 <a href="https://yejiayong.com/%E4%B8%BAGithub-pages%E5%A2%9E%E5%8A%A0%E8%85%BE%E8%AE%AF%E4%BA%91cdn%E5%8A%A0%E9%80%9F%E5%8A%9F%E8%83%BD/">Kelvin’s Blog</a>   </p><p>其实类似的教程在网上有很多，但是腾讯云的控制台经过数次迭代以后已经是面目全非了，哪一个设置在哪里都找不到。。。  </p><p>所以只说关键点  </p><h3 id="域名配置"><a href="#域名配置" class="headerlink" title="域名配置"></a>域名配置</h3><p>在CDN控制台添加域名，域名设置成我的博客域名<code>izumichan16.cn</code>，源站设置为<code>izumichan16.github.io</code>。回源Host设置为<code>izumichan16.cn</code>  </p><p>在这里，网上有的教程说回源Host填github的链接，不过这里应该填自己的域名。  </p><h3 id="加速服务配置"><a href="#加速服务配置" class="headerlink" title="加速服务配置"></a>加速服务配置</h3><p>选择静态加速，其他保持默认。</p><h3 id="CNAME设置"><a href="#CNAME设置" class="headerlink" title="CNAME设置"></a>CNAME设置</h3><p>只需要将CDN的CNMAE解析到域名下面就可以了。</p><div class="table-container"><table><thead><tr><th>主机记录</th><th>记录类型</th><th>线路类型</th><th>记录值</th></tr></thead><tbody><tr><td>@</td><td>CNAME</td><td>国内</td><td>……….</td></tr></tbody></table></div><h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/ping.png" alt="延迟可观"></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Blog</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Github Pages</tag>
+      
+      <tag>Hexo</tag>
+      
+      <tag>CDN</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>6月2日</title>
+    <link href="/2021/06/02/Dairy/6-2/"/>
+    <url>/2021/06/02/Dairy/6-2/</url>
+    
+    <content type="html"><![CDATA[<p>今天是我们体测的日子，周三。  </p><span id="more"></span><p>今天有几个想法，说“几个想法”是因为，我只能想到哪写到哪  </p><ul><li>以至于我现在都采用了无序队列的陈列方式  </li><li>我想给徐钟写信，但是上一封信她还没回复我，说是“但是”，但这并不是我没有给她写信的原因。反倒是我想给她写信的理由。我对“真实”，往往很渴望去了解。尽管它的背后也许很伤人。  </li></ul><hr><p>我们体测了，但是我因为没有测肺活量的吹嘴，焦虑了一段时间。其实可以说是很焦虑了。所以在上天桥的时候，我还在自我谴责心理素质差。你说，那些什么事情都能坦然面对的人，自然不会像我这样为这种小事焦虑吧。但是我后来一想，感觉很不对，他们那样的人，真的会犯这种错误吗？  </p><p>到这里，我才发现，采用这种无序列表真是大错特错，现在还是改用段落分割吧。  </p><p>不过这件事情还是没有发生，因为今天进行的体测内容并没有肺活量。<br>我们在三点抵达了体育场，天空没有像要下大雨一样要塌下来，但是大风和扬沙一样为这场大雨造足了势。事实上在今天中午，根据室友的描述，这场大雨在现代科技的计算下体现出万分精确地错过了我们的体测时间的趋势。<br>所以根据当时看到的天气，只能说这场雨来得是恰如其分。我并不担心我的体测，我知道不管怎么样，尽力了，老师都不会为难同学们。  </p><p>但我还是要说，我没吹嘴啊。  </p><p>我要略过我和牛牛龙龙二人去洗澡的事情，这太平常了。尽管一周只有两次洗澡这件事到如今我还是无法接受。  </p><p>不过后来我们在第二节课还是体测了，这是我所期望的。因为今天天气可太好了，我并不想下周顶着烈日跑一千米。不过我期间还在问吹嘴的事情，我真是个不折不扣的傻蛋。  </p><p>我要累死了，今天有19名同学跑了体测。我真的累死了，一刻没有停过，将第17名的好成绩<code>斩于马下</code></p><p>结束了我居然还在问测肺活量的事情，过不去了是吧。<br>也不是没有结果，这周不测…  </p><hr><p>我本来想以一种轻松愉快的方式展开和结束我们的对话，所以我讲了个我的书失而复得的故事。这种苏联笑话并不该出现在这个场合。  </p><p>我真的该学学怎么读空气了。在这里不使用“察言观色”这个词，也许也是一种过失，但我犯了无数的语言罪，<code>伤害</code>所造成的后果并不会因为“有心”“无心”而有所质变。  </p><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/%E6%B2%A1%E8%AF%B7%E5%81%87%E7%9A%84%E4%B8%8A%E6%99%9A%E8%87%AA%E4%B9%A0.png" alt=""></p><p>现在是<code>2021年06月02日21:30:43</code>，我今晚惹改改生气了，听到她说“你们没错，都是我的错”，我真的很难过。  </p><p>我像个伪君子一样，口口声声告诉她我已然明白这些道理了。但事实是，或许这些事情只是没有妨碍到我。我依旧我行我素，依旧不遵循<code>规则</code>，我说的“规则”，并不是<code>rule of game</code>也不是<code>rule of life</code>，仅仅是<code>RULE</code>。我不知道怎么说下去了，虚伪和欺骗也是人的一部分。  </p><p>但我并不想让她难过，尽管并不是因为我<code>个人</code>。在这个集体里，我依旧不愿意让她难过。我并没有觉得这个人是脆弱的，尽管她这样与我解释。恰恰相反，她是坚强的。善良的人没有不坚强的。  </p><p>世界都是这样的混合物组成的，一半是冷漠无情，一半是卑鄙邪恶。   </p><p>善良的人若是脆弱，我很难想象“善良”，这两个字，以及在不同语言不同语境下的同义词，能够坚持到人类学会交流，发明文字的纪元。  </p><p>我自认为善良，却总是在伤害真正善良的人。人的所谓<code>伤害</code>，不过是不同立场的<code>自私</code>的同义词，一种映射。  </p><p>她说：</p><blockquote><p>真的要秉承让你们活着毕业的原则，不管你们吗？</p></blockquote><hr><p>我真的很难过。我想她也是。</p><p>今天的天气也是忽明忽暗的。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>日记</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>DAY#4 Git SSH配置无误 但无法连接github远程仓库 &quot;Host Key Verification Failed&quot;</title>
+    <link href="/2021/06/01/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY4GitSSH%E9%85%8D%E7%BD%AE%E6%97%A0%E8%AF%AF%20%E4%BD%86%E6%97%A0%E6%B3%95%E8%BF%9E%E6%8E%A5github/"/>
+    <url>/2021/06/01/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY4GitSSH%E9%85%8D%E7%BD%AE%E6%97%A0%E8%AF%AF%20%E4%BD%86%E6%97%A0%E6%B3%95%E8%BF%9E%E6%8E%A5github/</url>
+    
+    <content type="html"><![CDATA[<p>今天在配置Git SSH时遇到问题  </p><p><img src="/images/sshfailed.png" alt="error"></p><p>原因：  </p><blockquote><p>少了一个known_hosts文件，本来密钥文件应该是三个，现在是两个，便报了这样的错误，此时选择yes回车之后，便可，同时生成了缺少了的known_hosts文件  </p></blockquote><p>解决：<br><figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs arcade">ssh-keyscan -H github.com &gt;&gt; ~<span class="hljs-regexp">/.ssh/</span>known_hosts<br></code></pre></td></tr></table></figure></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>Git</tag>
+      
+      <tag>SSH</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>概述</title>
+    <link href="/2021/05/31/Go%E8%AF%AD%E8%A8%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E7%9A%84%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/overview/"/>
+    <url>/2021/05/31/Go%E8%AF%AD%E8%A8%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E7%9A%84%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/overview/</url>
+    
+    <content type="html"><![CDATA[<h2 id="1-1特征"><a href="#1-1特征" class="headerlink" title="1.1特征"></a>1.1特征</h2><ul><li>语法简单  </li></ul><p>简单的本质：语言规则严谨，没有歧义，更没有什么黑魔法变异用法。任何人写出的代码基本一致  </p><ul><li>并发模型  </li></ul><p><code>Goroutine</code>是Go最显著的特征。它从根子上将一切并发化，使得语法上的并发编程变得简单起来  </p><ul><li>内存分配  </li></ul><p><code>tcmalloc</code>，为并发设计的高性能内存分配组件。  </p><ul><li>垃圾回收  </li></ul><p>Go Team团队还在努力  </p><ul><li>静态链接  </li></ul><p>将运行时、依赖库直接打包到可执行文件内部，简化了部署和发布操作，无需事先安装运行环境和下载诸多第三方库。  </p><ul><li>标准库  </li></ul><p>丰富，第三方优秀作品繁多。  </p><ul><li>工具链  </li></ul><p>功能未必完善，但也是简单易用。  </p><h2 id="1-2-简介"><a href="#1-2-简介" class="headerlink" title="1.2 简介"></a>1.2 简介</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>Golang</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Golang beginning</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>书写 SQL 语句</title>
+    <link href="/2021/05/27/DBMS%20%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B/%E4%BD%BF%E7%94%A8SQL%E8%AF%AD%E5%8F%A5/"/>
+    <url>/2021/05/27/DBMS%20%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B/%E4%BD%BF%E7%94%A8SQL%E8%AF%AD%E5%8F%A5/</url>
+    
+    <content type="html"><![CDATA[<h2 id=""><a href="#" class="headerlink" title=" "></a> </h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>SQL Tech</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>Notes</tag>
+      
+      <tag>PostgreSQL</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>DAY#3 番外 MariaDB</title>
+    <link href="/2021/05/25/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY3%E7%95%AA%E5%A4%96%E7%AF%87/"/>
+    <url>/2021/05/25/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY3%E7%95%AA%E5%A4%96%E7%AF%87/</url>
+    
+    <content type="html"><![CDATA[<p>5/27 Update<br>由于在IDEA上的驱动问题始终无法解决（暂时无法解决），所以转投PostgreSQL<br>学习中…  </p><h2 id="不会吧不会吧，主播连MariaDB都装不上"><a href="#不会吧不会吧，主播连MariaDB都装不上" class="headerlink" title="不会吧不会吧，主播连MariaDB都装不上"></a>不会吧不会吧，主播连MariaDB都装不上</h2><p>愤怒，直接 <code>Pacman -Rscn mysql</code> 删除全部MySQL相关文件。  </p><p>下载安装<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">paru MariaDB</span><br></code></pre></td></tr></table></figure></p><p>这里有一个注意点  </p><blockquote><p>当MySQL的启动路径 <code>/var/bin/mysql</code>还存在时<br>最好先<code>sudo rm -rf /var/bin/mysql</code>   </p></blockquote><p>然后嘞<br>安装 mariadb 软件包之后，你必须在启动 <code>mariadb.service</code>之前运行下面这条命令：<br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gradle"># mariadb-install-db --user=mysql --basedir=<span class="hljs-regexp">/usr --datadir=/</span>var<span class="hljs-regexp">/lib/my</span>sql<br></code></pre></td></tr></table></figure></p><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>执行了以上操作以后，其实在输出内容里有提示了，如果你是刚刚安装的MariaDB，那你多半还没自己的root密码，这时候怎么办呢？  </p><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">sudo</span> mysql -p -u root <span class="hljs-comment">#sudo一定不能少嗷</span><br></code></pre></td></tr></table></figure><p>因为没有密码，所以直接回车就好啦~~~  </p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>Notes</tag>
+      
+      <tag>MariaDB</tag>
+      
+      <tag>MySQL</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>DAY#3 Git初级使用</title>
+    <link href="/2021/05/25/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY3Git%E4%BD%BF%E7%94%A8/"/>
+    <url>/2021/05/25/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY3Git%E4%BD%BF%E7%94%A8/</url>
+    
+    <content type="html"><![CDATA[<h2 id="不会吧不会吧，主播一天踩两个坑"><a href="#不会吧不会吧，主播一天踩两个坑" class="headerlink" title="不会吧不会吧，主播一天踩两个坑"></a>不会吧不会吧，主播一天踩两个坑</h2><p>关于转生到<code>ArchLinux</code>后因为没有Github Desktop完全不会使用Git分支管理的主播踩坑这件事。  </p><h2 id="远程仓库"><a href="#远程仓库" class="headerlink" title="远程仓库"></a>远程仓库</h2><p>咋整，直接 <code>Git Clone</code> 呗！<br>记得在Chrome上用加速插件（虽然感觉收效甚微）  </p><h2 id="TimeFlow"><a href="#TimeFlow" class="headerlink" title="TimeFlow"></a>TimeFlow</h2><p>我完全是看着<a href="https://www.liaoxuefeng.com/wiki/896043488029600/896954848507552">廖雪峰</a>官网上写的，救命  </p><h3 id="关于-add-commit-push"><a href="#关于-add-commit-push" class="headerlink" title="关于 add commit push"></a>关于 add commit push</h3><blockquote><p>修改文件后，怎么提交到远程仓库<br>1.git status 查看git是否有修改内容需要提交<br>2.git add 指向需要提交的内容文件<br>3.git commit 提交到本地库<br>4.git push origin master 提交到远程仓库  </p></blockquote><h3 id="版本回退"><a href="#版本回退" class="headerlink" title="版本回退"></a>版本回退</h3>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>Notes</tag>
+      
+      <tag>Git</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>DAY#2 典狱长pacman</title>
+    <link href="/2021/05/20/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY2%E5%85%B8%E7%8B%B1%E9%95%BFpacman/"/>
+    <url>/2021/05/20/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY2%E5%85%B8%E7%8B%B1%E9%95%BFpacman/</url>
+    
+    <content type="html"><![CDATA[<p>遇到的几个反复出现的问题  </p><ol><li><code>-Syu</code> <code>-Syy</code> 等命令到底是是什么意思  </li><li>何为 <code>/var/lib/pacman/db.lck</code>  </li><li><code>yaourt</code> <code>yay</code> <code>paru</code>都是什么 </li></ol><h3 id="pacman-能做什么"><a href="#pacman-能做什么" class="headerlink" title="pacman 能做什么"></a>pacman 能做什么</h3><p> <a href="https://wiki.archlinux.org/title/Pacman_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87">其实这在wiki上都有详尽的说明</a></p><p>我们可以利用它：  </p><ul><li>安装软件包</li><li>删除软件包 </li><li>升级软件包</li><li>查询包数据库</li><li>清理软件包缓存</li></ul><p>这里单独说说删除软件包<br>删除单个软件包，保留其全部已经安装的依赖关系<br><figure class="highlight vala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vala"><span class="hljs-meta"># pacman -R package_name</span><br></code></pre></td></tr></table></figure><br>删除指定软件包，及其所有没有被其他已安装软件包使用的依赖关系：<br><figure class="highlight vala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vala"><span class="hljs-meta"># pacman -Rs package_name</span><br></code></pre></td></tr></table></figure><br>上面这条命令在移除包含其他所需包的组时有时候会拒绝运行。这种情况下可以尝试<br><figure class="highlight vala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vala"><span class="hljs-meta"># pacman -Rsu package_name</span><br></code></pre></td></tr></table></figure><br>要删除软件包和所有依赖这个软件包的程序:</p><blockquote><p>警告： 此操作是递归的，请小心检查，可能会一次删除大量的软件包。</p></blockquote><figure class="highlight vala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vala"><span class="hljs-meta"># pacman -Rsc package_name</span><br></code></pre></td></tr></table></figure><p>要删除一个被其他软件包依赖的软件包，但是不删除依赖这个软件包的其他软件包：</p><blockquote><p>警告： 此操作有破坏系统的能力，应该尽量避免使用。详情请看 避免某些 Pacman 命令。</p></blockquote><figure class="highlight vala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vala"><span class="hljs-meta"># pacman -Rdd package_name</span><br></code></pre></td></tr></table></figure><p>pacman 删除某些程序时会备份重要配置文件，在其后面加上*.pacsave扩展名。-n 选项可以避免备份这些文件<br><figure class="highlight ceylon"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ceylon">pacman -Rn <span class="hljs-keyword">package</span><span class="hljs-number">_n</span>ame<br></code></pre></td></tr></table></figure></p><p>还有升级<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">pacman -Syu</span><br></code></pre></td></tr></table></figure></p><hr><h3 id="何为-var-lib-pacman-db-lck"><a href="#何为-var-lib-pacman-db-lck" class="headerlink" title="何为 /var/lib/pacman/db.lck"></a>何为 <code>/var/lib/pacman/db.lck</code></h3><blockquote><p>[In reply to 六六子 小十]<br>是锁文件。防止你同时跑多只 pacman 弄坏数据库的</p></blockquote><p>破案了，Ctrl Z并不是强行停止应用</p><p><code>Ctrl+C</code> 是 kill。</p><h3 id="yaourt-yay-paru都是什么"><a href="#yaourt-yay-paru都是什么" class="headerlink" title="yaourt yay paru都是什么"></a><code>yaourt</code> <code>yay</code> <code>paru</code>都是什么</h3><p>电脑没电了快点说<br>他们都是 <code>AUR助手</code></p><blockquote><p>Arch 用户软件仓库 通常称为 AUR，是给 Arch 用户的基于社区的软件存储库。<br>根据软件包在 AUR 社区的流行程度，用户编译的软件包会进入到 Arch 的官方存储库。</p><p>AUR 助手是一个包装程序，允许用户从 AUR 存储库安装软件包，而无需手动干预。<br>很多用例实现了自动化，比如包搜索、解决依赖关系、检索和构建 AUR 包、Web 内容检索和 AUR 包提交之类。</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>Notes</tag>
+      
+      <tag>pacman</tag>
+      
+      <tag>aur</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>DAY#1 安装Archlinux</title>
+    <link href="/2021/05/19/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY1%E5%AE%89%E8%A3%85Archlinux/"/>
+    <url>/2021/05/19/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY1%E5%AE%89%E8%A3%85Archlinux/</url>
+    
+    <content type="html"><![CDATA[<h2 id="为什么选择-Arch"><a href="#为什么选择-Arch" class="headerlink" title="为什么选择 Arch"></a>为什么选择 Arch</h2><p>由于近期的作业原因，有了一个从Windows转移到Linux的契机。虽然以前并没有过多Linux基础，但我还是选择了网上描述为 <code>文档丰富，依赖包简单，贴近上游，定制性强，滚动升级</code> 的—— <strong>Arch</strong>  </p><p>其实也不全是被Arch的光芒所吸引，早在半年前，我的好友 xf 便邀请我加入 Arch 的大家庭之中。当时他说了一句极具诱惑性的话  </p><p><img src="/images/用linux.jpg" alt="用linux"></p><p>我有一众已经在计算机行业安家落户的好友，他们对我的指引对我的成长有莫大的帮助。但是，当时不懂事的小泉，还是被 Arch 极其繁杂的安装过程劝退了，这也是为什么大部分人推荐新手使用 <code>Deepin</code> 和 <code>Ubuntu</code> 。所以 Linux 修行之日，延至今日。  </p><h2 id="正题-：-安装-Arch"><a href="#正题-：-安装-Arch" class="headerlink" title="正题 ： 安装 Arch"></a>正题 ： 安装 Arch</h2><h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><p>我的硬件信息：<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Device</span> nameFortississimo<span class="hljs-number">16</span><br><span class="hljs-attribute">Processor</span>Intel(R) Core(TM) i<span class="hljs-number">7</span>-<span class="hljs-number">9750</span>H CPU @ <span class="hljs-number">2</span>.<span class="hljs-number">60</span>GHz   <span class="hljs-number">2</span>.<span class="hljs-number">59</span> GHz<br><span class="hljs-attribute">Installed</span> RAM<span class="hljs-number">16</span>.<span class="hljs-number">0</span> GB (<span class="hljs-number">15</span>.<span class="hljs-number">8</span> GB usable)<br><span class="hljs-attribute">Device</span> ID<span class="hljs-number">6739</span>AAA<span class="hljs-number">7</span>-<span class="hljs-number">7</span>DB<span class="hljs-number">0</span>-<span class="hljs-number">46</span>E<span class="hljs-number">9</span>-<span class="hljs-number">8</span>FBF-<span class="hljs-number">7</span>C<span class="hljs-number">77</span>BF<span class="hljs-number">06680</span>D<br><span class="hljs-attribute">Product</span> ID<span class="hljs-number">00330</span>-<span class="hljs-number">80000</span>-<span class="hljs-number">00000</span>-AA<span class="hljs-number">121</span><br><span class="hljs-attribute">System</span> type<span class="hljs-number">64</span>-bit operating system, x<span class="hljs-number">64</span>-based processor<br><span class="hljs-attribute">Pen</span> and touchPen support<br></code></pre></td></tr></table></figure><br><del>好吧，其实上面的信息除了 <code>Intel</code>都不重要</del><br>显卡是 <code>UHD Graphics 630 + RTX 2060</code>，这很重要，因为关乎到后面我们安装显卡驱动  </p><p>安装 Arch 的硬盘选择 <code>WDC SN520</code>，是一款性能不错的 nvme SSD。这里我选择了 Linux 和 原本的 Windows 10 共用同一个硬盘，在后面我们还会共用 EFI ，不过这都是后话。  </p><p>硬盘的类型也非常重要哦，如果我们确定了需要安装在 NVMe 硬盘上，(也许)需要在 BIOS 中修改 <code>从硬盘启动方式</code>为 <code>AHCI</code>（不过根据我的实践，我们大部分同学都是使用的 NVMe，所以默认就是 AHCI<br>而如果并不是<code>AHCI</code>模式，我们在进入后面的 Archios 是看不见我们待安装的硬盘哦！</p><hr><ol><li>硬盘分区<br>我们可以进入电脑自带的<code>磁盘管理</code>功能，额外分一个区给 Arch ，这里我给了 100 G。但是当我决定长期留在 Arch 后，我觉得100G也许并不够用。</li></ol><p><img src="/images/Disk-Management.png" alt=""></p><ol><li><p>制作启动盘<br>我按照推荐使用 <a href="https://rufus.ie/">Rufus</a>制作启动盘，需要注意的是，写入方式 为 <code>DD</code> 而非 <code>ISO</code>，选项那选择<code>GPT</code>而非默认的<code>MBR</code>  </p></li><li><p>BIOS的设置<br>保持上一步制作好的启动U盘一直插着  </p></li></ol><p>开机出现品牌logo时狂按对应键进入BIOS设置。</p><p>在 BIOS 中  </p><ul><li>禁用safeboot（有的电脑是中文BIOS，就将安全启动或是secure boot关闭  </li><li>如果硬盘是NVMe的，把 从硬盘的启动方式改成 AHCI  </li><li>修改启动顺序，把U盘的启动顺序放到最上面  </li></ul><p>完成之后退出重启，重启后会看见3个选项，这时候直接回车进入 Archiso</p><ol><li><p>检查网络<br>输入下面指令检查：  </p><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs css">ip <span class="hljs-selector-tag">a</span><br></code></pre></td></tr></table></figure><p><em>不出现error就是正常！</em>  </p></li></ol><p>这里用的是有线连接，如果你用的是无线连接需要按照下面的步骤连接到无线网：<br>输入<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">iwctl</span><br></code></pre></td></tr></table></figure><br>进入iwd模式，输入<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">device list</span><br></code></pre></td></tr></table></figure><br>查看你的网卡名字，一般是<code>wlan0</code>，输入<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">station</span> wlan<span class="hljs-number">0</span> scan<br></code></pre></td></tr></table></figure><br>检查扫描网络，输入<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs actionscript">station wlan0 <span class="hljs-keyword">get</span>-networks<br></code></pre></td></tr></table></figure><br>查看网络名字，假设名字叫BUPT-portal，输入<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">station</span> wlan<span class="hljs-number">0</span> connect BUPT-portal<br></code></pre></td></tr></table></figure></p><blockquote><p>有一点需要注意的事，中文在 Archiso 中暂时无法显示，所以可以的话我们需要把WiFi名字改为英文。   </p></blockquote><p>接着输入密码（如果有密码的话），输入后回车<br>然后退出iwd<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-keyword">exit</span><br></code></pre></td></tr></table></figure></p><p>连接成功之后，检查可以连接到pacman源<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">pacman -Syyy</span><br></code></pre></td></tr></table></figure><br><em>不出现error就是正常！</em></p><p>在这里我们可以先把 archlinux 源更换为国内源，因为 Arch 的特性，安装的全程无法脱机，所以需要保证高效的网络。</p><blockquote><p>我安装的时候，因为不会更换源，整个速度只有30kb，实属典狱长行为。 </p></blockquote><ol><li>硬盘<br>检查硬盘  <figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">lsblk</span><br></code></pre></td></tr></table></figure></li></ol><hr><p>建立分区<br>因为之前划好的<code>100G</code>空间在<code>nvme0n1</code>上，所以执行<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">cfdisk</span> /dev/nvme<span class="hljs-number">0</span>n<span class="hljs-number">1</span><br></code></pre></td></tr></table></figure><br>如果不是安装在主硬盘，也许会是 sda sdb 或是其他的，按提示输入即可<br>这里我们就能看到最后有100G的Free Space<br>方向键选择<code>resize</code> 回车<br>这里就输入<code>100G</code> 回车<br>选择<code>Write</code> 回车<br>输入<code>yes</code> 回车<br>写入完成 选择<code>Quit</code> 回车退出  </p><hr><p>检查分区情况<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">lsblk</span><br></code></pre></td></tr></table></figure><br>建立分区之后就可以看到分好的100G区  </p><hr><p>分区格式化</p><p>将刚刚分好的区格式化为<code>ext4</code>格式，这里认准分区号是<code>nvme0n1p5</code>  </p><h2 id=""><a href="#" class="headerlink" title=""></a><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">mkfs</span>.ext<span class="hljs-number">4</span> /dev/nvme<span class="hljs-number">0</span>n<span class="hljs-number">1</span>p<span class="hljs-number">5</span><br></code></pre></td></tr></table></figure></h2><p>挂载分区  </p><p>先挂载<code>/</code>分区，同样，这里分区号也是nvme0n1p5<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">mount</span> /dev/nvme<span class="hljs-number">0</span>n<span class="hljs-number">1</span>p<span class="hljs-number">5</span> /mnt<br></code></pre></td></tr></table></figure></p><p>这里利用Windows的EFI分区，检查EFI分区号<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">lsblk</span><br></code></pre></td></tr></table></figure><br>这里可以看到是nvme0n1p2<br>建立<code>boot</code>文件夹<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">mkdir <span class="hljs-regexp">/mnt/</span>boot<br></code></pre></td></tr></table></figure><br>挂载EFI分区</p><h2 id="-1"><a href="#-1" class="headerlink" title=""></a><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">mount <span class="hljs-regexp">/dev/</span>nvme0n1p2 <span class="hljs-regexp">/mnt/</span>boot<br></code></pre></td></tr></table></figure></h2><p>安装基本系统<br>执行<br><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs csharp">pacstrap /mnt <span class="hljs-keyword">base</span> linux linux-firmware nano<br></code></pre></td></tr></table></figure><br>等待安装完毕</p><hr><p>生成fstab文件<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">genfstab -U <span class="hljs-regexp">/mnt &gt;&gt; /m</span>nt<span class="hljs-regexp">/etc/</span>fstab<br></code></pre></td></tr></table></figure><br>检查生成的fstab文件<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">cat <span class="hljs-regexp">/mnt/</span>etc/fstab<br></code></pre></td></tr></table></figure><br><em>不出现error就是正常！</em></p><hr><p>正式配置新系统  </p><p>切换到装好的系统<br><figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">arch-chroot <span class="hljs-string">/mnt</span><br></code></pre></td></tr></table></figure></p><p>建立swapfile  </p><blockquote><p>在 ext4 上使用 swapfile 的用户请注意，升级到 5.7.x 内核后可能出现诸如「kernel: swapon: swapfile has holes」这样的报错而无法启用 swapfile 。使用 dd 命令创建 swapfile （而非 fallocate） 可能可以解决问题，也可以回退 5.6 系列内核等待上游修复。<br>Arch Linux 错误跟踪：<a href="https://bugs.archlinux.org/task/66921">https://bugs.archlinux.org/task/66921</a><br>内核错误跟踪：<a href="https://bugzilla.kernel.org/show_bug.cgi?id=207585">https://bugzilla.kernel.org/show_bug.cgi?id=207585</a><br>如果之前安装的内核是linux-lts：<br>fallocate -l 2GB /swapfile</p><blockquote><p>注意：命令中是 小写字母l 而非 数字1 也非 字母i的大写</p></blockquote></blockquote><p>如果之前安装的内核不是linux-lts，这里创建swapfile需要使用dd命令：<br><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">dd <span class="hljs-attribute">if</span>=/dev/zero <span class="hljs-attribute">of</span>=/swapfile <span class="hljs-attribute">bs</span>=2048 <span class="hljs-attribute">count</span>=1048576 <span class="hljs-attribute">status</span>=progress<br></code></pre></td></tr></table></figure><br>这里分了2G作为swapfile   </p><p>改权限<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">chmod</span> <span class="hljs-number">600</span> /swapfile<br></code></pre></td></tr></table></figure><br>建立swap空间<br><figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">mkswap <span class="hljs-string">/swapfile</span><br></code></pre></td></tr></table></figure><br>激活swap空间<br><figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">swapon <span class="hljs-string">/swapfile</span><br></code></pre></td></tr></table></figure><br>修改/etc/fstab文件<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">nano <span class="hljs-regexp">/etc/</span>fstab<br></code></pre></td></tr></table></figure><br>到文件末尾输入<br><figure class="highlight avrasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs avrasm">/swapfile none <span class="hljs-keyword">swap</span> defaults <span class="hljs-number">0</span> <span class="hljs-number">0</span><br></code></pre></td></tr></table></figure><br>保存退出</p><hr><p>设置时区<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">ln -sf <span class="hljs-regexp">/usr/</span>share<span class="hljs-regexp">/zoneinfo/</span>Asia<span class="hljs-regexp">/Shanghai /</span>etc/localtime<br></code></pre></td></tr></table></figure><br>或<br><figure class="highlight dsconfig"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dsconfig"><span class="hljs-string">timedatectl</span> <span class="hljs-built_in">set-timezone</span> <span class="hljs-string">Asia</span>/<span class="hljs-string">Shanghai</span><br></code></pre></td></tr></table></figure><br>同步硬件时钟<br><figure class="highlight ada"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ada">hwclock <span class="hljs-comment">--systohc</span><br></code></pre></td></tr></table></figure></p><hr><p>设置locale<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">nano <span class="hljs-regexp">/etc/</span>locale.gen<br></code></pre></td></tr></table></figure><br>Ctrl+W 输入 #en_US 回车 找到UTF-8那一行 删掉前面的#（取消注释）<br>Ctrl+W 输入 #zh_CN 回车 找到UTF-8那一行 删掉前面的#（取消注释）  </p><blockquote><p>Ctel+W 是nano编辑器的搜索命令</p></blockquote><p>Ctrl+X 保存退出  </p><p>生成locale<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">locale-gen</span><br></code></pre></td></tr></table></figure><br>创建并写入/etc/locale.conf文件<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">nano <span class="hljs-regexp">/etc/</span>locale.conf <br></code></pre></td></tr></table></figure><br>填入内容，注意这里只能填这个<br><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">LANG</span>=en_US.UTF-<span class="hljs-number">8</span><br></code></pre></td></tr></table></figure><br>创建并写入hostname<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">nano <span class="hljs-regexp">/etc/</span>hostname<br></code></pre></td></tr></table></figure><br>这里我写入的是 <code>arch</code> 作为hostname，你也可以输别的  </p><p>保存退出</p><hr><p>修改hosts<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">nano <span class="hljs-regexp">/etc/</span>hosts<br></code></pre></td></tr></table></figure><br>写入内容（中间的空白用tab而非空格）<br><figure class="highlight accesslog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs accesslog"><span class="hljs-number">127.0.0.1</span>localhost<br>::<span class="hljs-number">1</span>localhost<br><span class="hljs-number">127.0.1.1</span>arch.localdomainarch<br></code></pre></td></tr></table></figure><br>保存退出  </p><p>建议上述编辑的内容都用<code>cat</code>输出检查一下</p><hr><p>为root用户创建密码<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">passwd</span><br></code></pre></td></tr></table></figure><br>然后输入并确认密码（linux终端的密码没有回显，输完直接回车就好）</p><hr><p>创建启动器  </p><p>安装基本的包，这里使用grub为启动器<br><figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm">pacman -S grub efibootmgr networkmanager network-manager-applet <span class="hljs-keyword">dialog </span>wireless_tools wpa_supplicant os-prober mtools dosfstools ntfs<span class="hljs-number">-3</span>g <span class="hljs-keyword">base-devel </span>linux-headers reflector git sudo<br></code></pre></td></tr></table></figure><br>请务必确保输入的指令与上面的一致(还有网速快)  </p><p>检查完毕回车，需要选择直接回车就好，等待安装结束  </p><p>输入<br><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">grub-install <span class="hljs-attribute">--target</span>=x86_64-efi <span class="hljs-attribute">--efi-directory</span>=/boot <span class="hljs-attribute">--bootloader-id</span>=Arch<br></code></pre></td></tr></table></figure><br>确保输入指令完全正确回车  </p><p>生成grub.cfg<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">grub-mkconfig -o <span class="hljs-regexp">/boot/g</span>rub/grub.cfg<br></code></pre></td></tr></table></figure><br>看到 <code>done</code>则成功</p><hr><p>退出新系统并取消挂载<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-keyword">exit</span><br>umount -a<br></code></pre></td></tr></table></figure><br>重启<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">reboot</span><br></code></pre></td></tr></table></figure><br>启动时请拔出u盘</p><hr><p>进入装好的Arch系统并激活网络<br>进去之后 先输入<code>root</code> 回车 输入密码 回车  </p><p>启动网络服务<br><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">systemctl <span class="hljs-keyword">enable</span> <span class="hljs-comment">--now NetworkManager</span><br></code></pre></td></tr></table></figure><br>设置WiFi<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">nmtui</span><br></code></pre></td></tr></table></figure><br>选择你要连接到的WiFi 输入密码 回车 然后退出</p><hr><p>新建用户并授权<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">useradd -m -G wheel mir</span><br></code></pre></td></tr></table></figure><br>wheel后面是你的用户名，这里输入的是izumichan16</p><blockquote><p>Linux 的用户名是全小写的哦</p></blockquote><p>为用户创建密码<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">passwd mir</span><br></code></pre></td></tr></table></figure><br>输入并确认密码<br>授权<br><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">EDITOR</span>=na<span class="hljs-literal">no</span> visudo<br></code></pre></td></tr></table></figure><br>Ctrl+W 输入<code># %wheel</code> 回车 找到这行 删除前面的 #（取消注释）<br>保存退出  </p><hr><p>安装显卡驱动<br>安装AMD集显驱动<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">pacman</span> -S xf<span class="hljs-number">86</span>-video-amdgpu<br></code></pre></td></tr></table></figure><br>安装NVIDIA独显驱动<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">pacman -S nvidia nvidia-utils</span><br></code></pre></td></tr></table></figure><br>安装Display Server，这里用的是开源世界最为流行的xorg<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">pacman -S xorg</span><br></code></pre></td></tr></table></figure><br>出现选择直接回车即可</p><hr><p>安装Display Manager<br>建议使用KDE<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">pacman -S sddm</span><br></code></pre></td></tr></table></figure><br>设置开机自动启动，以sddm为例：<br><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">systemctl <span class="hljs-builtin-name">enable</span> gdm<br></code></pre></td></tr></table></figure></p><hr><p>安装Desktop Environment<br>KDE：<br><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">pacman</span> -S plasma kde-applications packagekit-qt<span class="hljs-number">5</span><br></code></pre></td></tr></table></figure><br>一路回车即可<br>安装中文的字体<br>这一步不装进去图形界面之后还是要装：更纱黑体<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">pacman -S ttf-sarasa-gothic</span><br></code></pre></td></tr></table></figure><br>等待安装完毕<br><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">reboot</span><br></code></pre></td></tr></table></figure><br>在grub界面选择<code>archlinux</code>回车</p><p>Enjoy it！</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Arch</tag>
+      
+      <tag>Linux</tag>
+      
+      <tag>Notes</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>数据库编程</title>
+    <link href="/2021/05/17/Java%20Programming/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%BC%96%E7%A8%8B/"/>
+    <url>/2021/05/17/Java%20Programming/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%BC%96%E7%A8%8B/</url>
+    
+    <content type="html"><![CDATA[<h2 id="JDBC-的设计"><a href="#JDBC-的设计" class="headerlink" title="JDBC 的设计"></a>JDBC 的设计</h2><p>ODBC 为 C 语言访问数据库提供了一套编程接口。JDBC 和 ODBC 都基于同一个思想： 根据 API 编写的程序都可以与驱动管理器进行通信，而驱动管理器则通过驱动程序与实际的数据库进行通信。</p><p>也就是说，JDBC API 是大部分发程序员不得不使用的接口。</p><h3 id="JDBC-驱动程序类型"><a href="#JDBC-驱动程序类型" class="headerlink" title="JDBC 驱动程序类型"></a>JDBC 驱动程序类型</h3><p>１.　驱动程序将JDBC翻译成ODBC然后使用ODBC程序与数据库进行通信。<br>２.　驱动程序由Java程序和部分本地代码组成，用于与数据库的客户端API进行通信。<br>３.　纯Java客户端类库，使用与具体数据库无关的协议将数据库请求发送给服务器构件，该构件将数据库请求翻译成相关协议。<br>４.　纯Java类库，将JDBC请求直接翻译成数据库相关的协议。</p><h3 id="JDBC的典型用法"><a href="#JDBC的典型用法" class="headerlink" title="JDBC的典型用法"></a>JDBC的典型用法</h3><p><strong><em>三层模型</em></strong></p><ul><li><p>将 <strong><em>可视化表示</em></strong>(客户端) 从 <strong><em>业务逻辑</em></strong>(中间层) 和原始数据(数据库)中分离出来</p></li><li><p>JDBC 管理中间岑和后台数据之间的通信</p></li></ul><p><img src="/images/三层结构的应用.png" alt="三层结构的应用"></p><h2 id="结构化查询语言"><a href="#结构化查询语言" class="headerlink" title="结构化查询语言"></a>结构化查询语言</h2><p><strong><em>其实就是SQL！</em></strong></p><h2 id="JDBC-配置"><a href="#JDBC-配置" class="headerlink" title="JDBC 配置"></a>JDBC 配置</h2><h3 id="数据库URL"><a href="#数据库URL" class="headerlink" title="数据库URL"></a>数据库URL</h3><p>连接数据库时需要使用各种与数据库相关的参数  </p><p><strong>一般语法</strong><br><code>jdbc:subprotocol:other stuff</code><br>其中，<code>subprotocol</code>用于选择连接到数据库的具体驱动程序（例如MySQL<br><code>other stuff</code>参数的格式随着所使用的subprotocol不同而不同。</p><h3 id="驱动程序JAR文件"><a href="#驱动程序JAR文件" class="headerlink" title="驱动程序JAR文件"></a>驱动程序JAR文件</h3><p>在运行访问数据库的程序时，需要将驱动程序的JAR文件包括到类路径中（编译时并不需要这个文件</p><h3 id="启动数据库"><a href="#启动数据库" class="headerlink" title="启动数据库"></a>启动数据库</h3><h3 id="注册驱动器类"><a href="#注册驱动器类" class="headerlink" title="注册驱动器类"></a>注册驱动器类</h3><blockquote><p>Loading class <code>&#39;com.mysql.jdbc.Driver&#39;</code>. This is deprecated. The new driver class is <code>&#39;com.mysql.cj.jdbc.Driver&#39;</code>. The driver is automatically registered via the SPI and manual loading of the driver class is generally unnecessary.</p></blockquote><p>意思就是现在不用注册了，自动搞好</p><h3 id="连接到数据库"><a href="#连接到数据库" class="headerlink" title="连接到数据库"></a>连接到数据库</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">+<span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> String url = <span class="hljs-string">&quot;jdbc:mysql://localhost:3306/DB_Name?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC&quot;</span>;<br><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> String USER = <span class="hljs-string">&quot;root&quot;</span>;<br><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> String PASS = <span class="hljs-string">&quot;root&quot;</span>;<br></code></pre></td></tr></table></figure><h2 id="使用-JDBC-语句"><a href="#使用-JDBC-语句" class="headerlink" title="使用 JDBC 语句"></a>使用 JDBC 语句</h2><h2 id="执行查询操作"><a href="#执行查询操作" class="headerlink" title="执行查询操作"></a>执行查询操作</h2><h2 id="可滚动和可更新的结果集"><a href="#可滚动和可更新的结果集" class="headerlink" title="可滚动和可更新的结果集"></a>可滚动和可更新的结果集</h2><h2 id="行集"><a href="#行集" class="headerlink" title="行集"></a>行集</h2><h2 id="元数据"><a href="#元数据" class="headerlink" title="元数据"></a>元数据</h2><h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><h2 id="高级-SQL类型"><a href="#高级-SQL类型" class="headerlink" title="高级 SQL类型"></a>高级 SQL类型</h2><h2 id="Web-和企业应用中的连接管理"><a href="#Web-和企业应用中的连接管理" class="headerlink" title="Web 和企业应用中的连接管理"></a>Web 和企业应用中的连接管理</h2>]]></content>
+    
+    
+    <categories>
+      
+      <category>Java核心技术</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Java</tag>
+      
+      <tag>JDBC</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>数据结构绪论</title>
+    <link href="/2021/01/28/Data%20Structure/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%BB%AA%E8%AE%BA/"/>
+    <url>/2021/01/28/Data%20Structure/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%BB%AA%E8%AE%BA/</url>
+    
+    <content type="html"><![CDATA[<h2 id="1-3-数据结构起源"><a href="#1-3-数据结构起源" class="headerlink" title="1.3 数据结构起源"></a>1.3 数据结构起源</h2><p>数据结构是一门研究非数值计算的程序设计问题中的操作对象，以及它们之间的关系和操作等相关问题的学科。</p><p>程序设计的实质是对确定的问题选择一种好的结构，加上设计一种好算法。</p><h2 id="1-4-基本概念和术语"><a href="#1-4-基本概念和术语" class="headerlink" title="1.4 基本概念和术语"></a>1.4 基本概念和术语</h2><h3 id="1-4-1-数据"><a href="#1-4-1-数据" class="headerlink" title="1.4.1 数据"></a>1.4.1 数据</h3><p>数据：是描述客观事物的符号，是计算机中可操作的对象，是能被计算机识别，并输入给计算机处理的符号集合。</p><p><strong><em>数据 == 符号</em></strong></p><blockquote><p>前提：</p><ul><li>可以输入到计算机中</li><li>能被计算机程序处理</li></ul></blockquote><h3 id="1-4-2-数据元素"><a href="#1-4-2-数据元素" class="headerlink" title="1.4.2 数据元素"></a>1.4.2 数据元素</h3><p>数据元素：是组成数据的、有一定意义的基本单位，在计算机中通常作为整体处理。也被称为记录。</p><h3 id="1-4-3-数据"><a href="#1-4-3-数据" class="headerlink" title="1.4.3 数据"></a>1.4.3 数据</h3><p>数据项：一个数据元素可以由若干个数据项组成。数据项是数据不可分割的最小单位。</p><h3 id="1-4-4-数据对象"><a href="#1-4-4-数据对象" class="headerlink" title="1.4.4 数据对象"></a>1.4.4 数据对象</h3><p>数据对象：是性质相同的数据元素的集合、是数据的子集。</p><h3 id="1-4-5-数据结构"><a href="#1-4-5-数据结构" class="headerlink" title="1.4.5 数据结构"></a>1.4.5 数据结构</h3><blockquote><p>数据结构：是相互之间存在一种或多种特定关系的数据元素的集合。</p></blockquote><h2 id="1-5-逻辑结构和物理结构"><a href="#1-5-逻辑结构和物理结构" class="headerlink" title="1.5 逻辑结构和物理结构"></a>1.5 逻辑结构和物理结构</h2><h3 id="1-5-1-逻辑结构"><a href="#1-5-1-逻辑结构" class="headerlink" title="1.5.1 逻辑结构"></a>1.5.1 逻辑结构</h3><p><strong><em>逻辑结构：是指数据对象中数据元素之间的相互关系。</em></strong></p><blockquote><ol><li>集合结构：集合结构中的数据源安苏除了同属于一个集合外，它们之间没有其他关系。</li><li>线性结构：线性结构中的数据元素之间是一对一的关系。</li><li>树形结构：树型结构中的数据元素之间存在一种一对多的层次关系。</li><li>图形结构：图形结构的数据元素是多对多的关系。</li></ol></blockquote><h3 id="1-5-2-物理结构"><a href="#1-5-2-物理结构" class="headerlink" title="1.5.2 物理结构"></a>1.5.2 物理结构</h3><p><strong><em>物理结构：是指数据的逻辑结构在计算机中的储存形式</em></strong></p><blockquote><ol><li>顺序储存结构：十八数据元素存放在地址连续的储存单元里，其数据见的逻辑关系和物理关系是一致的。</li><li>链式储存结构：十八数据元素存放在任意的储存单元里，这组储存单元也可以是连续的，也可以出差不连续的。</li></ol></blockquote><h2 id="1-6-抽象数据类型"><a href="#1-6-抽象数据类型" class="headerlink" title="1.6 抽象数据类型"></a>1.6 抽象数据类型</h2><h3 id="1-6-1-数据类型"><a href="#1-6-1-数据类型" class="headerlink" title="1.6.1 数据类型"></a>1.6.1 数据类型</h3><p><strong><em>数据类型：是指一组性质相同的值的集合及定义在此集合上的一些操作的总称。</em></strong></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Data Structure</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Notes</tag>
+      
+      <tag>Data Structure</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Java数据类型</title>
+    <link href="/2021/01/23/Java%20Programming/Java%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/"/>
+    <url>/2021/01/23/Java%20Programming/Java%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</url>
+    
+    <content type="html"><![CDATA[<p>==未完==</p><h2 id="Essentials-of-Today’s-Study-Log"><a href="#Essentials-of-Today’s-Study-Log" class="headerlink" title="Essentials of Today’s Study Log"></a>Essentials of Today’s Study Log</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">```<br><br>## The main Puzzle of Learning Today<br>```java<br></code></pre></td></tr></table></figure><h1 id="primitive主数据类型和引用"><a href="#primitive主数据类型和引用" class="headerlink" title="primitive主数据类型和引用"></a>primitive主数据类型和引用</h1><h3 id="Declaring-a-variable"><a href="#Declaring-a-variable" class="headerlink" title="Declaring  a variable"></a>Declaring  a variable</h3><blockquote><p>primitive主数据类型保存基本类型的值，包括==整数、布尔、浮点数==等</p><p>变量必须拥有类型<br>这是因为Java是一种<strong>强类型语言</strong></p></blockquote><div class="table-container"><table><thead><tr><th>类型</th><th>位数</th><th>值域</th></tr></thead><tbody><tr><td>boolean</td><td>JVM-specific</td><td><strong><em>true</em></strong> or <strong><em>false</em></strong></td></tr><tr><td>char</td><td>16 bits</td><td>0 to 65535</td></tr><tr><td>byte</td><td>8 bits</td><td>-128 to 127</td></tr><tr><td>short</td><td>16 bits</td><td>-32786 to 32767</td></tr><tr><td>int</td><td>32 bits</td><td>-2147483648 to 2147483647</td></tr><tr><td>long</td><td>64 bits</td><td>-huge to huge</td></tr><tr><td>float</td><td>32 bits</td><td>varies</td></tr><tr><td>double</td><td>64 bits</td><td>varies</td></tr></tbody></table></div><h3 id="To-spill-that…"><a href="#To-spill-that…" class="headerlink" title="To spill that…"></a>To spill that…</h3><p><strong>要确保变量能存下所保存的值</strong></p><h4 id="the-ways-to-assign-a-value-to-a-variable"><a href="#the-ways-to-assign-a-value-to-a-variable" class="headerlink" title="the ways to assign a value to a variable"></a>the ways to assign a value to a variable</h4><blockquote><ul><li>在等号后面直接打出</li><li>指派其他变量的值(x = y)</li><li>两种方法的组合…</li></ul></blockquote><p><em>对于编译器来说，将大物体装进小容器，就算能用肉眼看出这是安全的，但编译器并不会照办，因为这有==溢出==的可能</em></p><h3 id="Back-away-from-that-keyword"><a href="#Back-away-from-that-keyword" class="headerlink" title="Back away from that keyword!"></a>Back away from that keyword!</h3><blockquote><ul><li>以 ==字母==、==_== 、==$== 符号开头</li><li>避开保留字(keyword)</li><li>除了第一个字符，其他地方可以随意使用数字</li></ul></blockquote><h3 id="Controlling-object"><a href="#Controlling-object" class="headerlink" title="Controlling object"></a>Controlling object</h3><blockquote><ul><li>没有对象变量这样的东西存在</li><li>只有引用 ==<em>reference</em>== 到对象的变量</li><li>对象引用变量保存的是存取对象的方法</li><li>(指针又出现了，但不是明面上出现)只有JVM知道如何引用来取得对象</li></ul></blockquote><h3 id="An-objext-reference-is-just-another-variable-value"><a href="#An-objext-reference-is-just-another-variable-value" class="headerlink" title="An objext reference is just another variable value"></a>An objext reference is just another variable value</h3><p><strong><em>对象的声明、创建与赋值有三个步骤</em></strong></p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">Dog myDog = <span class="hljs-keyword">new</span> Dog();<br></code></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java">Dog myDog =<br><span class="hljs-comment">//Dog myDog 部分，声明了一个引用变量</span><br></code></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java"> = <span class="hljs-keyword">new</span> Dog();<br><span class="hljs-comment">//new Dog() 部分，创建对象</span><br></code></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java"> = ;<br><span class="hljs-comment">//= 连接对象和引用</span><br></code></pre></td></tr></table></figure><p>可以看出，对象引用，也只是一个变量而已。</p><h3 id="Life-and-death-on-the-heap"><a href="#Life-and-death-on-the-heap" class="headerlink" title="Life and death on the heap"></a>Life and death on the heap</h3><h3 id="An-array-is-like-a-tray-of-cups"><a href="#An-array-is-like-a-tray-of-cups" class="headerlink" title="An array is like a tray of cups"></a>An array is like a tray of cups</h3><h3 id="Make-an-array-of-Object"><a href="#Make-an-array-of-Object" class="headerlink" title="Make an array of Object"></a>Make an array of Object</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dog</span> </span>&#123;<br>    String name;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span></span>&#123;<br>        Dog dog1=<span class="hljs-keyword">new</span> Dog();<br>        dog1.bark();<br>        dog1.name = <span class="hljs-string">&quot;Bart&quot;</span>;<br><br>        Dog[] myDogs = <span class="hljs-keyword">new</span> Dog[<span class="hljs-number">3</span>];<br>        myDogs[<span class="hljs-number">0</span>] = <span class="hljs-keyword">new</span> Dog();<br>        myDogs[<span class="hljs-number">1</span>] = <span class="hljs-keyword">new</span> Dog();<br>        myDogs[<span class="hljs-number">2</span>] = dog1;<br><br>        myDogs[<span class="hljs-number">0</span>].name = <span class="hljs-string">&quot;Fred&quot;</span>;<br>        myDogs[<span class="hljs-number">1</span>].name = <span class="hljs-string">&quot;Marge&quot;</span>;<br><br>        System.out.print(<span class="hljs-string">&quot;Last dog&#x27;s name is &quot;</span>);<br>        System.out.println(myDogs[<span class="hljs-number">2</span>].name);<br><br>        <span class="hljs-keyword">int</span> x = <span class="hljs-number">0</span>;<br>        <span class="hljs-keyword">while</span> (x &lt; myDogs.length)&#123;<br>            myDogs[x].bark();<br>            x = x +<span class="hljs-number">1</span>;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span>  <span class="hljs-keyword">void</span> <span class="hljs-title">bark</span><span class="hljs-params">()</span></span>&#123;<br>        System.out.println(name + <span class="hljs-string">&quot;says Ruff!&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><hr><p>END</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Java核心技术</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Java</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>初识Java</title>
+    <link href="/2021/01/22/Java%20Programming/%E5%88%9D%E8%AF%86Java/"/>
+    <url>/2021/01/22/Java%20Programming/%E5%88%9D%E8%AF%86Java/</url>
+    
+    <content type="html"><![CDATA[<h2 id="Essentials-of-Today’s-Study-Log"><a href="#Essentials-of-Today’s-Study-Log" class="headerlink" title="Essentials of Today’s Study Log"></a>Essentials of Today’s Study Log</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-number">1.</span> 面向对象扩展功能不需要改动之前已经测试好的程序代码<br><span class="hljs-number">2.</span> 所有Java程序都定义在类中<br><span class="hljs-number">3.</span> 类是对象的蓝图<br><span class="hljs-number">4.</span> 对象自治<br><span class="hljs-number">5.</span> 实例变量，代表对象的状态<br><span class="hljs-number">6.</span> 方法，代表对象的行为<br><span class="hljs-number">7.</span> 类可以继承自较为抽象的父类<br><span class="hljs-number">8.</span> Java的程序在执行期是一组会互相交谈的对象<br></code></pre></td></tr></table></figure><h2 id="The-main-Puzzle-of-Learning-Today"><a href="#The-main-Puzzle-of-Learning-Today" class="headerlink" title="The main Puzzle of Learning Today"></a>The main Puzzle of Learning Today</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-number">1.</span> What the hell is instace variable???<br></code></pre></td></tr></table></figure><h1 id="初识Java"><a href="#初识Java" class="headerlink" title="初识Java"></a>初识Java</h1><h3 id="The-way-Java-works"><a href="#The-way-Java-works" class="headerlink" title="The way Java works"></a>The way Java works</h3><blockquote><ul><li>源代码</li><li>编译器(编译器会产生字节码<code>bytecode</code>)</li><li>输出</li><li>JVM(虚拟机可以读取与执行字节码)</li></ul></blockquote><font color=#229453></font><h3 id="What-you’ll-do-in-Java"><a href="#What-you’ll-do-in-Java" class="headerlink" title="What you’ll do in Java"></a>What you’ll do in Java</h3><blockquote><ul><li>源代码<code>Source</code></li><li>编译器<code>Compiler</code></li><li>输出 <code>Output</code></li><li>Java虚拟机 <code>Virtual Machines</code></li></ul></blockquote><h3 id="Code-structure-in-Java"><a href="#Code-structure-in-Java" class="headerlink" title="Code structure in Java"></a>Code structure in Java</h3><font color=#229453>什么是源文件？</font><blockquote><ul><li>拓展名为<code>.java</code>的源文件带有类的定义。</li><li>类用来表示程序的一个组件。</li></ul></blockquote><font color=#229453>什么是类？</font><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dog</span></span>&#123;<br><br>    <span class="hljs-comment">//这是一个类</span><br>    <span class="hljs-comment">//类中带有一个或多个方法</span><br>    <span class="hljs-comment">//方法必须在类的内部声明</span><br>&#125;<br></code></pre></td></tr></table></figure><font color=#229453>什么是方法？</font><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dog</span></span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">bark</span><span class="hljs-params">()</span></span>&#123;<br>        <span class="hljs-comment">//很显然，这是一个让狗勾叫起来的方法(method)</span><br>        <span class="hljs-comment">//可以把方法想象成一个函数或过程</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><h3 id="Writing-a-class-with-a-main"><a href="#Writing-a-class-with-a-main" class="headerlink" title="Writing a class with a main"></a>Writing a class with a main</h3><p>在Java中所有东西都会属于某个类。<br>我们会建立一个源文件<code>.java</code>，然后编译它<code>.class</code>。真正被执行的显然是类。<br>而执行，意味着JVM会加载这个类，运行它的<code>main()</code>直到main中所有程序代码结束。</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Main</span></span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(string[] args)</span></span>&#123;<br>        System.out.println(<span class="hljs-string">&quot;HelloWorld&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><h3 id="What-can-you-say-in-the-main-method"><a href="#What-can-you-say-in-the-main-method" class="headerlink" title="What  can you say in the main method?"></a>What  can you say in the main method?</h3><h4 id="1-Do-something"><a href="#1-Do-something" class="headerlink" title="1. Do something"></a>1. Do something</h4><blockquote><p>声明、设定、调用方法……</p><h4 id="2-Do-something-again-and-again"><a href="#2-Do-something-again-and-again" class="headerlink" title="2. Do something again and again"></a>2. Do something again and again</h4><p><code>do while</code> <code>while</code> <code>for</code></p><h4 id="3-Do-something-under-this-condition"><a href="#3-Do-something-under-this-condition" class="headerlink" title="3. Do something under this condition"></a>3. Do something under this condition</h4><p><code>if else</code> <code>switch</code></p></blockquote><h1 id="对象！对象！"><a href="#对象！对象！" class="headerlink" title="对象！对象！"></a>对象！对象！</h1><h3 id="What-‘s-the-difference-between-a-class-and-an-object"><a href="#What-‘s-the-difference-between-a-class-and-an-object" class="headerlink" title="What ‘s the difference between a class and an object?"></a>What ‘s the difference between a class and an object?</h3><font color=#134856>类不是对象，而是用来创造它们的模型</font>> 换句话说，类是对象的蓝图--->1. 类是一个抽象的概念，它不存在于现实中的时间/空间里，类只是为所有的对象定义了抽象的属性与行为。就好像“Person（人）”这个类，它虽然可以包含很多个体，但它本身不存在于现实世界上。>2. 对象是类的一个具体。它是一个实实在在存在的东西。>3. 类是一个静态的概念，类本身不携带任何数据。当没有为类创建任何对象时，类本身不存在于内存空间中。>4. 对象是一个动态的概念。每一个对象都存在着有别于其它对象的属于自己的独特的属性和行为。对象的属性可以随着它自己的行为而发生改变。### Making and testing objects<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Movie</span> </span>&#123;<span class="hljs-comment">//创建了一个名为Movie的类</span><br><br>    String title;<br>    String genre; <span class="hljs-comment">//这有三个实例变量(instance variable)</span><br>    <span class="hljs-keyword">int</span> rating;<br><br>    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">playIt</span><span class="hljs-params">()</span> </span>&#123;<span class="hljs-comment">//定义了一个方法</span><br>    System.out.println(“Playing the movie”);<br>    &#125;<br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MovieTestDrive</span> </span>&#123;<span class="hljs-comment">//用来测试的类</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        Movie one = <span class="hljs-keyword">new</span> Movie();<span class="hljs-comment">//创建了名为Movie的对象</span><br><br>        one.title = “Gone with the Stock”;<br>        one.genre = “Tragic”;<br>        one.rating = -<span class="hljs-number">2</span>;<br>        <span class="hljs-comment">/*</span><br><span class="hljs-comment">        Movie one = new Movie(“Gone with the Stock”,“Tragic”,-2);</span><br><span class="hljs-comment">        */</span><br><br>        Movie two = <span class="hljs-keyword">new</span> Movie();<span class="hljs-comment">//第二个</span><br>        two.title = “Lost in Cubicle Space”;<br>        two.genre = “Comedy”;<br>        two.rating = <span class="hljs-number">5</span>;<br><br>        two.playIt();<span class="hljs-comment">//调用playIt()方法</span><br><br>        Movie three = <span class="hljs-keyword">new</span> Movie();<span class="hljs-comment">//第三个</span><br>        three.title = “Byte Club”;<br>        three.genre = “Tragic but ultimately uplifting”;<br>        three.rating = <span class="hljs-number">127</span>;<br>    &#125;<br>&#125;  <br></code></pre></td></tr></table></figure>### Get out of main!<font color=#134856>main()的两种用途</font><blockquote><ul><li>测试真正的类</li><li>启动你的Java应用程序</li></ul></blockquote><p>下面用一段实例代码演示main()的作用</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GameLauncher</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span></span>&#123;<br>        GuessGame game = <span class="hljs-keyword">new</span> GuessGame();<br>        game.startGame();<br>    &#125;<br>&#125;<br>````<br><br>```java<br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Player</span> </span>&#123;<br>    <span class="hljs-keyword">int</span> number = <span class="hljs-number">0</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span>  <span class="hljs-keyword">void</span> <span class="hljs-title">guess</span><span class="hljs-params">()</span></span>&#123;<br>        number = (<span class="hljs-keyword">int</span>)(Math.random() * <span class="hljs-number">10</span>);<br>        System.out.println(<span class="hljs-string">&quot;I&#x27;m guessing&quot;</span>+ number);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GuessGame</span> </span>&#123;<br>    Player p1;<br>    Player p2;<br>    Player p3;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">startGame</span><span class="hljs-params">()</span></span>&#123;<br>        p1 = <span class="hljs-keyword">new</span> Player();<br>        p2 = <span class="hljs-keyword">new</span> Player();<br>        p3 = <span class="hljs-keyword">new</span> Player();<br><br>        <span class="hljs-keyword">int</span> guessp1;<br>        <span class="hljs-keyword">int</span> guessp2;<br>        <span class="hljs-keyword">int</span> guessp3;<br><br>        <span class="hljs-keyword">boolean</span> p1isRight = <span class="hljs-keyword">false</span>;<br>        <span class="hljs-keyword">boolean</span> p2isRight = <span class="hljs-keyword">false</span>;<br>        <span class="hljs-keyword">boolean</span> p3isRight = <span class="hljs-keyword">false</span>;<br><br>        <span class="hljs-keyword">int</span> targetNumber = (<span class="hljs-keyword">int</span>)(Math.random()*<span class="hljs-number">10</span>);<br>        System.out.println(<span class="hljs-string">&quot;I’m thinking of a number between 0 and 9...&quot;</span>);<br><br>        <span class="hljs-keyword">while</span> (<span class="hljs-keyword">true</span>) &#123;<br>            System.out.println(<span class="hljs-string">&quot;Number to guess is &quot;</span> + targetNumber);<br><br>            p1.guess();<br>            p2.guess();<br>            p3.guess();<br><br>            guessp1 = p1.number;<br>            System.out.println(<span class="hljs-string">&quot;Player one guessed &quot;</span> + guessp1);<br>            guessp2 = p2.number;<br>            System.out.println(<span class="hljs-string">&quot;Player two guessed &quot;</span> + guessp2);<br>            guessp3 = p3.number;<br>            System.out.println(<span class="hljs-string">&quot;Player three guessed &quot;</span> + guessp3);<br><br>            <span class="hljs-keyword">if</span> (guessp1 == targetNumber) &#123;<br>                p1isRight = <span class="hljs-keyword">true</span>;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (guessp2 == targetNumber) &#123;<br>                p2isRight = <span class="hljs-keyword">true</span>;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (guessp3 == targetNumber) &#123;<br>                p3isRight = <span class="hljs-keyword">true</span>;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (p1isRight || p2isRight || p3isRight) &#123;<br>                System.out.println(<span class="hljs-string">&quot;We have a winner!&quot;</span>);<br>                System.out.println(<span class="hljs-string">&quot;Player one got it right? &quot;</span> + p1isRight);<br>                System.out.println(<span class="hljs-string">&quot;Player two got it right? &quot;</span> + p2isRight);<br>                System.out.println(<span class="hljs-string">&quot;Player three got it right? &quot;</span> + p3isRight);<br>                System.out.println(<span class="hljs-string">&quot;Game is over.&quot;</span>);<br>                <span class="hljs-keyword">break</span>;<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                System.out.println(<span class="hljs-string">&quot;Player will have to try again.&quot;</span>);<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><p>这里分别创建了<code>GameLauncher.java</code> <code>Player.java</code> <code>GuessGame.java</code>三个文件，最后通过GameLauncher中的<code>main()</code>执行。</p><hr><p>END</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Java核心技术</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Java</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  
+</search>
