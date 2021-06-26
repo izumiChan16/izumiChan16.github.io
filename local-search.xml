@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>DAY#7 把腾讯云服务器换成最爱的Arch</title>
+    <link href="/2021/06/26/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY7vps2arch/"/>
+    <url>/2021/06/26/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY7vps2arch/</url>
+    
+    <content type="html"><![CDATA[<h1 id="起因～"><a href="#起因～" class="headerlink" title="起因～"></a>起因～</h1><p>晚上小贩突然告诉我，CentOS都停止维护了。听到这个消息，我下意识的认为，CentOS已经死了。（尽管在搜索新闻后得知，还是有4年的寿命的）不过对我来说，使用一个不会再进行更新的系统本身就无法让人忍受了。更何况我也用不惯别的Linux，<code>Yum</code>实在是有点麻烦。  </p><p>当然，最重要的原因，还是因为我太喜欢Arch了，而且我也喜欢折腾。  </p><h1 id="那就开始吧～"><a href="#那就开始吧～" class="headerlink" title="那就开始吧～"></a>那就开始吧～</h1><p>首先我想去找如何一步一步安装<code>Arch</code>，在搜索的过程中我就差点打退堂鼓了，毕竟，光是给自己电脑装也并不是那么简单的事情。我无法预料在服务器上安装会出什么岔子。  </p><p>又是小贩！它告诉我有这么一个，叫做<a href="https://github.com/felixonmars/vps2arch"><code>vps2arch</code></a>的一键安装脚本，既然如此方便，那我们不妨直接使用吧。</p><p>不过这里有个小插曲，当我在原装的<code>CentOS 7.6</code>下使用脚本时，出现了<code>Kernel too old</code>的错误<br><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/kernaltooold.png" alt=""><br>于是我听了小贩的建议，先把服务器重装为<code>Debian 10.2</code>，据说是兼容性好。因为我是新服务器，不需要备份文件，这一个过程花费不到30s。  </p><p>然后在ssh连接重装后的服务器又出问题了</p><p><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/IdentificationChanged.png" alt=""></p><p>嗯哼，这是因为重装系统以后，服务器的信息发生了变化，和原先储存在我们本地上的指纹不一样咯。所以按照它提示给我们的路径，删除<code>~/.ssh</code>路径下的<code>known_hosts</code>和另一个<code>.old</code>文件就好啦～～～  </p><p>然后就是等录到<code>root</code>账户，开始使用脚本吧～</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">wget http://tinyurl.com/vps2arch &amp;&amp; chmod +x vps2arch &amp;&amp; ./vps2arch<br></code></pre></td></tr></table></figure><div class="note note-success">            <p>需要注意的是，这里的连接和<code>github</code>上的不太一样，如果服务器没有配置代理的话，使用上面的链接下载似乎更快喔  </p>          </div><hr><p>然后等待十分钟左右（让我惊奇的是，这些全是内网下载，特别快<br>出现下面的字段，就表示已经安装成功啦<br><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/2archsccees.png" alt=""></p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sync ; reboot -f<br></code></pre></td></tr></table></figure><p>等待重启完成<br><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/chpasswd.png" alt=""><br>更改新的root密码即可～</p><hr><p>这里还遇到一些ssh问题，比如更改密码后无法使用ssh连接服务器，出现<code>Permission denied, please try again.</code>错误，这里就不展开篇幅啦～</p><hr><p>Enjoy it ~<br><img src="https://cdn.jsdelivr.net/gh/izumiChan16/ForPic/img/20210626095730.png" alt=""></p><blockquote><p>似乎占用内存真的变小了！！！</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>Archlinux</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>-vps2arch</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>DAY#6 为Arch设置交换分区和休眠</title>
     <link href="/2021/06/08/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY6archswapon/"/>
     <url>/2021/06/08/Archlinux%E8%B8%A9%E5%9D%91%E6%97%A5%E8%AE%B0/DAY6archswapon/</url>
